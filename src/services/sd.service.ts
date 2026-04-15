@@ -28,8 +28,8 @@ export class SDService {
           t.Status = ${'Open'} 
           AND t.TtsTypeId = 6 
           AND cst.Network LIKE ${'%/32'} 
-          AND COALESCE(c.DisplayBranchId, c.BranchId) IN ${branches}
-    `.all()) as {
+          AND FIND_IN_SET(COALESCE(c.DisplayBranchId, c.BranchId), ${branches.join(',')})
+    `) as {
       ticket_id: string
       subscriber_id: string
       subscriber_name: string

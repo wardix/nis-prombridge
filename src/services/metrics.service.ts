@@ -14,7 +14,7 @@ export const domainExpiryGauge = new Gauge({
 export class MetricsService {
   async updateDomainMetrics() {
     try {
-      // Menggunakan query dari @y.sql
+      // Menggunakan query dari bun:sql
       const results = (await sql`
         SELECT 
             cs.CustDomain AS domain, 
@@ -32,15 +32,19 @@ export class MetricsService {
                 FROM Services 
                 WHERE ServiceGroup = 'DO'
             )
-      `.all()) as {
+      `) as {
         domain: string
         subscriber_id: string
         expiry_date: Date | string
         expiry_timestamp: number
       }[]
 
-      domainRegistry.clear()
+      domainExpiryGauge.reset()
       results.forEach((row) => {
+        if (!row.domain || row.expiry_timestamp === null) {
+          return
+        }
+
         // Memastikan format tanggal YYYY-MM-DD untuk label
         const dateObj = new Date(row.expiry_date)
         const dateString = dateObj.toISOString().split('T')[0]

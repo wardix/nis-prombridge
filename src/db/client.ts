@@ -12,5 +12,5 @@ export const sql = new SQL(connectionString)
 export async function query<T>(queryStr: string): Promise<T[]> {
   // Note: Using raw queries with bun:sql requires caution.
   // We'll use this as a bridge for now or update services to use sql`` directly.
-  return (await sql.query(queryStr).all()) as T[]
+  return (await sql.unsafe(queryStr)) as T[]
 }
