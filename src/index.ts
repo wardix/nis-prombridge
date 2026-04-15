@@ -16,7 +16,7 @@ app.route('/metrics', metricsRoutes)
 
 console.log(`NIS-PromBridge starting on port ${config.PORT}`)
 
-export default {
+Bun.serve({
   port: config.PORT,
   fetch: app.fetch,
-}
+})
