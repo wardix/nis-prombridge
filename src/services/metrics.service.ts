@@ -7,14 +7,14 @@ export const domainRegistry = new Registry()
 export const domainExpiryGauge = new Gauge({
   name: 'domain_expiry_timestamp',
   help: 'Unix timestamp of domain expiration date',
-  labelNames: ['domain', 'expiry', 'csid', 'aspect'],
+  labelNames: ['domain', 'expiry', 'csid', 'aspect', 'dependent_service'],
   registers: [domainRegistry],
 })
 
 export class MetricsService {
   async updateDomainMetrics() {
     try {
-      // Menggunakan query dari bun:sql
+      // Query 1: Mengambil data domain yang akan kadaluarsa
       const results = (await sql`
         SELECT 
             cs.CustDomain AS domain, 
@@ -39,7 +39,33 @@ export class MetricsService {
         expiry_timestamp: number
       }[]
 
-      domainExpiryGauge.reset()
+      // Query 2: Mengambil layanan dependen yang terkait dengan domain (dari @z.sql)
+      const dependentServices = (await sql`
+        SELECT 
+            cs.CustDomain AS domain, 
+            MAX(cs.ServiceId) AS service_id
+        FROM CustomerServices AS cs
+        INNER JOIN Services AS s 
+            ON s.ServiceId = cs.ServiceId
+        WHERE 
+            cs.CustDomain NOT IN ('', '-')
+            AND cs.CustStatus IN ('AC', 'FR')
+            AND cs.InvoiceType != 8
+            AND s.ServiceGroup != 'DO'
+        GROUP BY 
+            cs.CustDomain
+      `) as {
+        domain: string
+        service_id: number
+      }[]
+
+      // Memetakan domain ke dependent service_id untuk akses cepat
+      const dependentServiceMap = new Map<string, string>()
+      dependentServices.forEach((ds) => {
+        dependentServiceMap.set(ds.domain, String(ds.service_id))
+      })
+
+      domainRegistry.clear()
       results.forEach((row) => {
         if (!row.domain || row.expiry_timestamp === null) {
           return
@@ -49,12 +75,16 @@ export class MetricsService {
         const dateObj = new Date(row.expiry_date)
         const dateString = dateObj.toISOString().split('T')[0]
 
+        // Ambil dependent_service dari map atau set 'none'
+        const dependentService = dependentServiceMap.get(row.domain) || 'none'
+
         domainExpiryGauge.set(
           {
             domain: row.domain,
             expiry: dateString,
             csid: String(row.subscriber_id),
             aspect: 'domain_monitoring',
+            dependent_service: dependentService,
           },
           row.expiry_timestamp
         )
