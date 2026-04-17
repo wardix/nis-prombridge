@@ -65,7 +65,7 @@ export class MetricsService {
         dependentServiceMap.set(ds.domain, String(ds.service_id))
       })
 
-      domainRegistry.clear()
+      domainExpiryGauge.reset()
       results.forEach((row) => {
         if (!row.domain || row.expiry_timestamp === null) {
           return
