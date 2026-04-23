@@ -20,4 +20,20 @@ router.get('/ticket-monitoring', async (c) => {
   return c.json(targets)
 })
 
+router.get('/iforte-fttx', async (c) => {
+  const branchParam = c.req.query('branch')
+  const branchesParam = c.req.queries('branch')
+
+  let branchList: string[] | undefined
+
+  if (branchesParam && branchesParam.length > 0) {
+    branchList = branchesParam
+  } else if (branchParam) {
+    branchList = branchParam.split(',')
+  }
+
+  const targets = await sdService.getIforteFttxTargets(branchList)
+  return c.json(targets)
+})
+
 export default router
