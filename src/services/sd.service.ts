@@ -87,7 +87,8 @@ export class SDService {
         ip: row.ip_address,
         host: row.subscriber_name || 'Unknown',
         csid: String(row.subscriber_id),
-        aspect: 'iforte_fttx_monitoring',
+        aspect: 'fttx',
+        operator: 'Iforte',
       },
     }))
 
