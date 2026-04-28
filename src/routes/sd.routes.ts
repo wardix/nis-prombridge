@@ -35,4 +35,10 @@ router.get('/fbstar-fttx', async (c) => {
   return c.json(targets)
 })
 
+router.get('/cgs-fttx', async (c) => {
+  const branchList = getBranchList(c)
+  const targets = await sdService.getCgsFttxTargets(branchList)
+  return c.json(targets)
+})
+
 export default router
