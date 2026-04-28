@@ -71,7 +71,7 @@ export class SDService {
       LEFT JOIN fiber_vendor fv ON fv.id = nf.vendorId 
       LEFT JOIN Customer c ON c.CustId = cs.CustId 
       WHERE 
-          fv.name = ${'Iforte'} 
+          fv.id = 22
           AND cs.CustStatus IN ('AC', 'FR') 
           AND cst.Network LIKE ${'%/32'} 
           AND FIND_IN_SET(COALESCE(c.DisplayBranchId, c.BranchId), ${branches.join(',')})
@@ -88,7 +88,7 @@ export class SDService {
         host: row.subscriber_name || 'Unknown',
         csid: String(row.subscriber_id),
         aspect: 'fttx',
-        operator: 'Iforte',
+        operator: 'iforte',
       },
     }))
 
