@@ -1,10 +1,10 @@
 # NIS-PromBridge
 
-**NIS-PromBridge** adalah layanan jembatan (*bridge service*) berkinerja tinggi yang menghubungkan **Sistem Informasi Internal** dengan ekosistem pemantauan Prometheus. Aplikasi ini berfungsi sebagai generator **Service Discovery (HTTP SD)** sekaligus **Custom Exporter** untuk mengotomatisasi pemantauan infrastruktur secara dinamis.
+**NIS-PromBridge** adalah layanan jembatan (*bridge service*) berkinerja tinggi yang menghubungkan **Sistem Informasi Internal** dengan ekosistem pemantauan Prometheus. Aplikasi ini berfungsi sebagai generator **Service Discovery (HTTP SD)** sekaligus **Custom Exporter** untuk memantau infrastruktur secara dinamis.
 
 ## 🚀 Fitur Utama
 
-- **Dynamic Service Discovery**: Menyediakan endpoint `/sd/ticket-monitoring` untuk target pemantauan berdasarkan tiket gangguan aktif, serta `/sd/iforte-fttx` untuk target pelanggan FTTx via mitra Iforte yang tercatat di sistem informasi.
+- **Dynamic Service Discovery**: Menyediakan endpoint `/sd/ticket-monitoring` untuk target pemantauan berdasarkan tiket gangguan aktif, serta `/sd/iforte-fttx` dan `/sd/fbstar-fttx` untuk target pelanggan FTTx via mitra (Iforte/Fbstar) yang tercatat di sistem informasi.
 - **Domain Expiry Monitoring**: Mengekspos metrik tanggal kedaluwarsa domain pelanggan langsung ke Prometheus.
 - **High Performance**: Dibangun di atas runtime **Bun** dan framework **Hono** untuk memastikan latensi minimal dan efisiensi sumber daya.
 - **Native SQL**: Menggunakan `bun:sql` (driver native Zig) untuk koneksi database MySQL yang aman, cepat, dan modern.
@@ -26,6 +26,7 @@
 | :--- | :--- | :--- |
 | `/sd/ticket-monitoring` | `GET` | Mengembalikan daftar target IP pelanggan dengan tiket berstatus 'Open'. Mendukung filter cabang melalui query parameter `?branch=020,027`. |
 | `/sd/iforte-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Iforte. Mendukung filter cabang melalui query parameter `?branch=020,028`. |
+| `/sd/fbstar-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Fbstar. Mendukung filter cabang melalui query parameter `?branch=020,028`. |
 
 ### 2. Metrics (Format Prometheus)
 | Endpoint | Method | Deskripsi |
