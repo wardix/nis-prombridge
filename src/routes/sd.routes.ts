@@ -41,4 +41,10 @@ router.get('/cgs-fttx', async (c) => {
   return c.json(targets)
 })
 
+router.get('/sip-fttx', async (c) => {
+  const branchList = getBranchList(c)
+  const targets = await sdService.getSipFttxTargets(branchList)
+  return c.json(targets)
+})
+
 export default router
