@@ -28,7 +28,7 @@
 | `/sd/iforte-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Iforte. Mendukung filter cabang melalui query parameter `?branch=020,028`. |
 | `/sd/fbstar-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Fbstar. Mendukung filter cabang melalui query parameter `?branch=020,028`. |
 | `/sd/cgs-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Cgs. Mendukung filter cabang melalui query parameter `?branch=020,028`. |
-| `/sd/sip-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Sip (Merger ID 6 & 13). Mendukung filter cabang melalui query parameter `?branch=020,028`. |
+| `/sd/sip-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Sip. Mendukung filter cabang melalui query parameter `?branch=020,028`. |
 
 ### 2. Metrics (Format Prometheus)
 | Endpoint | Method | Deskripsi |

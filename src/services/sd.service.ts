@@ -202,7 +202,7 @@ export class SDService {
       LEFT JOIN fiber_vendor fv ON fv.id = nf.vendorId 
       LEFT JOIN Customer c ON c.CustId = cs.CustId 
       WHERE 
-          fv.id IN (6, 13) 
+          fv.id = 13
           AND cs.CustStatus IN ('AC', 'FR') 
           AND cst.Network LIKE ${'%/32'} 
           AND FIND_IN_SET(COALESCE(c.DisplayBranchId, c.BranchId), ${branches.join(',')})
