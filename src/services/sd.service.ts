@@ -60,7 +60,7 @@ export class SDService {
         : ['020', '027', '028', '029']
 
     const results = (await sql`
-      SELECT 
+      SELECT DISTINCT
           cs.CustServId AS subscriber_id, 
           cs.CustAccName AS subscriber_name, 
           SUBSTRING_INDEX(TRIM(cst.Network), '/', 1) AS ip_address 
@@ -105,7 +105,7 @@ export class SDService {
         : ['020', '027', '028', '029']
 
     const results = (await sql`
-      SELECT 
+      SELECT DISTINCT
           cs.CustServId AS subscriber_id, 
           cs.CustAccName AS subscriber_name, 
           SUBSTRING_INDEX(TRIM(cst.Network), '/', 1) AS ip_address 
@@ -148,7 +148,7 @@ export class SDService {
         : ['020', '027', '028', '029']
 
     const results = (await sql`
-      SELECT 
+      SELECT DISTINCT
           cs.CustServId AS subscriber_id, 
           cs.CustAccName AS subscriber_name, 
           SUBSTRING_INDEX(TRIM(cst.Network), '/', 1) AS ip_address 
@@ -191,7 +191,7 @@ export class SDService {
         : ['020', '027', '028', '029']
 
     const results = (await sql`
-      SELECT 
+      SELECT DISTINCT
           cs.CustServId AS subscriber_id, 
           cs.CustAccName AS subscriber_name, 
           SUBSTRING_INDEX(TRIM(cst.Network), '/', 1) AS ip_address 
