@@ -43,7 +43,7 @@ export class SDService {
         host: row.subscriber_name || 'Unknown',
         ticket: String(row.ticket_id),
         csid: String(row.subscriber_id),
-        aspect: 'ticket_monitoring',
+        aspect: 'ticket',
       },
     }))
 
