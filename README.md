@@ -34,6 +34,7 @@
 | Endpoint | Method | Deskripsi |
 | :--- | :--- | :--- |
 | `/metrics/domains` | `GET` | Mengekspos metrik `domain_expiry_timestamp` (Unix timestamp) dengan label pendukung seperti `domain`, `expiry` (YYYY-MM-DD), dan `csid`. |
+| `/metrics/operator-tickets` | `GET` | Mengekspos metrik `operator_ticket_created_timestamp_seconds` (Gauge) dengan label `operator`, `ticket`, `csid`, `host`, `request_number`, `ticket_number`, `category`, `status`. Fallbacks: `ticket_number="pending"`, `category="unknown"`, `status="submitted"`. |
 
 ## ⚙️ Instalasi & Setup
 
