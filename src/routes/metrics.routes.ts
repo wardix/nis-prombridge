@@ -1,5 +1,9 @@
 import { Hono } from 'hono'
-import { domainRegistry, operatorRegistry, metricsService } from '../services/metrics.service'
+import {
+  domainRegistry,
+  operatorRegistry,
+  metricsService,
+} from '../services/metrics.service'
 
 const router = new Hono()
 

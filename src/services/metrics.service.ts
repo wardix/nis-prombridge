@@ -148,7 +148,10 @@ export class MetricsService {
       operatorTicketGauge.reset()
 
       rows.forEach((row) => {
-        if (row.insert_timestamp === null || row.insert_timestamp === undefined) {
+        if (
+          row.insert_timestamp === null ||
+          row.insert_timestamp === undefined
+        ) {
           return
         }
 
