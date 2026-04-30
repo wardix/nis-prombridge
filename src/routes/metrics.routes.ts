@@ -1,11 +1,17 @@
 import { Hono } from 'hono'
-import { domainRegistry, metricsService } from '../services/metrics.service'
+import { domainRegistry, operatorRegistry, metricsService } from '../services/metrics.service'
 
 const router = new Hono()
 
 router.get('/domains', async (c) => {
   await metricsService.updateDomainMetrics()
   const metrics = await domainRegistry.metrics()
+  return c.text(metrics)
+})
+
+router.get('/operator-tickets', async (c) => {
+  await metricsService.updateOperatorTicketMetrics()
+  const metrics = await operatorRegistry.metrics()
   return c.text(metrics)
 })
 
