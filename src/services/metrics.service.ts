@@ -26,6 +26,8 @@ export const operatorTicketGauge = new Gauge({
     'ticket_number',
     'category',
     'status',
+    'aspect',
+    'created_at',
   ],
   registers: [operatorRegistry],
 })
@@ -160,6 +162,20 @@ export class MetricsService {
         const status = row.status ?? 'submitted'
         const host = row.subscriber_name ?? 'Unknown'
 
+        // Format the insert_time to 'YYYY-MM-DD HH:mm'
+        let createdAt = 'Unknown'
+        if (row.insert_time) {
+          const date = new Date(row.insert_time)
+          if (!isNaN(date.getTime())) {
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            const hours = String(date.getHours()).padStart(2, '0')
+            const minutes = String(date.getMinutes()).padStart(2, '0')
+            createdAt = `${year}-${month}-${day} ${hours}:${minutes}`
+          }
+        }
+
         operatorTicketGauge.set(
           {
             operator: 'fbstar',
@@ -170,6 +186,8 @@ export class MetricsService {
             ticket_number: ticketNumber,
             category,
             status,
+            aspect: 'ticket',
+            created_at: createdAt,
           },
           Number(row.insert_timestamp)
         )
