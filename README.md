@@ -35,6 +35,23 @@
 | :--- | :--- | :--- |
 | `/metrics/domains` | `GET` | Mengekspos metrik `domain_expiry_timestamp` (Unix timestamp) dengan label pendukung seperti `domain`, `expiry` (YYYY-MM-DD), dan `csid`. |
 | `/metrics/operator-tickets` | `GET` | Mengekspos metrik `operator_ticket_created_timestamp_seconds` (Gauge) dengan label `operator`, `ticket`, `csid`, `host`, `request_number`, `ticket_number`, `category`, `status`. Fallbacks: `ticket_number="pending"`, `category="unknown"`, `status="submitted"`. |
+| `/metrics/data-quality` | `GET` | Mengekspos metrik `data_quality_missing_circuit_id` (Gauge) untuk pelanggan aktif yang belum memiliki Vendor Circuit ID. Label: `operator="fbstar"`, `csid`, `host`, `status`. |
+
+#### Data Quality Metrics
+Endpoint `/metrics/data-quality` mengekspos metrik bertipe Gauge bernama `data_quality_missing_circuit_id`. Metrik ini menunjukkan pelanggan aktif yang terhubung melalui vendor Fbstar (vendor id = 1) tetapi memiliki nilai Vendor CID kosong.
+
+Labels:
+- operator: tetap `fbstar`
+- csid: subscriber id (CustServId)
+- host: nama pelanggan (CustAccName), fallback `Unknown`
+- status: subscription status (CustStatus), fallback `Unknown`
+
+Contoh output Prometheus:
+```
+# HELP data_quality_missing_circuit_id Pelanggan aktif yang belum memiliki Vendor Circuit ID
+# TYPE data_quality_missing_circuit_id gauge
+data_quality_missing_circuit_id{operator="fbstar",csid="105523",host="PT. Maju Bersama",status="AC"} 1
+```
 
 ## ⚙️ Instalasi & Setup
 
