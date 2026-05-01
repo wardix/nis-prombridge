@@ -32,6 +32,15 @@ export const operatorTicketGauge = new Gauge({
   registers: [operatorRegistry],
 })
 
+export const dataQualityRegistry = new Registry()
+
+export const dataQualityMissingCIDGauge = new Gauge({
+  name: 'data_quality_missing_circuit_id',
+  help: 'Pelanggan aktif yang belum memiliki Vendor Circuit ID',
+  labelNames: ['operator', 'csid', 'host', 'status'],
+  registers: [dataQualityRegistry],
+})
+
 export class MetricsService {
   async updateDomainMetrics() {
     try {
@@ -194,6 +203,61 @@ export class MetricsService {
       })
     } catch (error) {
       console.error('Error updating operator ticket metrics:', error)
+    }
+  }
+
+  async updateDataQualityMetrics() {
+    try {
+      const rows = (await sql`
+        SELECT 
+            cstl.CustServId AS subscriber_id, 
+            cs.CustAccName AS subscriber_name, 
+            cstc.value AS circuit_id, 
+            cs.CustStatus AS subscription_status 
+        FROM CustomerServiceTechnicalCustom cstc 
+        LEFT JOIN CustomerServiceTechnicalLink cstl 
+            ON cstl.id = cstc.technicalTypeId 
+        LEFT JOIN CustomerServices cs 
+            ON cs.CustServId = cstl.CustServId 
+        LEFT JOIN Customer c 
+            ON c.CustId = cs.CustId 
+        LEFT JOIN noc_fiber nf 
+            ON nf.id = cstl.foVendorId 
+        LEFT JOIN fiber_vendor fv 
+            ON nf.vendorId = fv.id 
+        WHERE 
+            cstc.technicalType = 'link' 
+            AND cstc.attribute = 'Vendor CID' 
+            AND cstl.CustServId IS NOT NULL 
+            AND cs.CustStatus NOT IN ('NA', 'BL') 
+            AND fv.id = 1 
+            AND (cstc.value = '' OR cstc.value IS NULL);
+      `) as {
+        subscriber_id: string | null
+        subscriber_name: string | null
+        circuit_id: string | null
+        subscription_status: string | null
+      }[]
+
+      dataQualityMissingCIDGauge.reset()
+
+      rows.forEach((row) => {
+        const csid = String(row.subscriber_id ?? '')
+        const host = row.subscriber_name ?? 'Unknown'
+        const status = row.subscription_status ?? 'Unknown'
+
+        dataQualityMissingCIDGauge.set(
+          {
+            operator: 'fbstar',
+            csid,
+            host,
+            status,
+          },
+          1
+        )
+      })
+    } catch (error) {
+      console.error('Error updating data quality metrics:', error)
     }
   }
 }

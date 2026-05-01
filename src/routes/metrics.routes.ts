@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import {
   domainRegistry,
   operatorRegistry,
+  dataQualityRegistry,
   metricsService,
 } from '../services/metrics.service'
 
@@ -16,6 +17,12 @@ router.get('/domains', async (c) => {
 router.get('/operator-tickets', async (c) => {
   await metricsService.updateOperatorTicketMetrics()
   const metrics = await operatorRegistry.metrics()
+  return c.text(metrics)
+})
+
+router.get('/data-quality', async (c) => {
+  await metricsService.updateDataQualityMetrics()
+  const metrics = await dataQualityRegistry.metrics()
   return c.text(metrics)
 })
 
