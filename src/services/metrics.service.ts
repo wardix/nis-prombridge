@@ -7,7 +7,7 @@ export const domainRegistry = new Registry()
 export const domainExpiryGauge = new Gauge({
   name: 'domain_expiry_timestamp',
   help: 'Unix timestamp of domain expiration date',
-  labelNames: ['domain', 'expiry', 'csid', 'aspect', 'dependent_service'],
+  labelNames: ['domain', 'expiry', 'subscriber_id', 'dependent_service'],
   registers: [domainRegistry],
 })
 
@@ -20,14 +20,14 @@ export const operatorTicketGauge = new Gauge({
   labelNames: [
     'operator',
     'ticket',
-    'csid',
-    'host',
+    'subscriber_id',
+    'subscriber_name',
     'request_number',
     'ticket_number',
     'category',
     'status',
-    'aspect',
     'created_at',
+    'ticketing',
   ],
   registers: [operatorRegistry],
 })
@@ -37,7 +37,7 @@ export const dataQualityRegistry = new Registry()
 export const dataQualityMissingCIDGauge = new Gauge({
   name: 'data_quality_missing_circuit_id',
   help: 'Pelanggan aktif yang belum memiliki Vendor Circuit ID',
-  labelNames: ['operator', 'csid', 'host', 'status'],
+  labelNames: ['operator', 'subscriber_id', 'subscriber_name', 'status'],
   registers: [dataQualityRegistry],
 })
 
@@ -112,8 +112,7 @@ export class MetricsService {
           {
             domain: row.domain,
             expiry: dateString,
-            csid: String(row.subscriber_id),
-            aspect: 'domain_monitoring',
+            subscriber_id: String(row.subscriber_id),
             dependent_service: dependentService,
           },
           row.expiry_timestamp
@@ -189,14 +188,14 @@ export class MetricsService {
           {
             operator: 'fbstar',
             ticket: String(row.ticket_id ?? ''),
-            csid: String(row.subscriber_id ?? ''),
-            host,
+            subscriber_id: String(row.subscriber_id ?? ''),
+            subscriber_name: host,
             request_number: String(row.request_number ?? ''),
             ticket_number: ticketNumber,
             category,
             status,
-            aspect: 'ticket',
             created_at: createdAt,
+            ticketing: 'yes',
           },
           Number(row.insert_timestamp)
         )
@@ -242,15 +241,15 @@ export class MetricsService {
       dataQualityMissingCIDGauge.reset()
 
       rows.forEach((row) => {
-        const csid = String(row.subscriber_id ?? '')
-        const host = row.subscriber_name ?? 'Unknown'
+        const subscriberId = String(row.subscriber_id ?? '')
+        const subscriberName = row.subscriber_name ?? 'Unknown'
         const status = row.subscription_status ?? 'Unknown'
 
         dataQualityMissingCIDGauge.set(
           {
             operator: 'fbstar',
-            csid,
-            host,
+            subscriber_id: subscriberId,
+            subscriber_name: subscriberName,
             status,
           },
           1

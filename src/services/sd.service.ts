@@ -41,9 +41,10 @@ export class SDService {
       labels: {
         ip: row.ip_address,
         host: row.subscriber_name || 'Unknown',
+        subscriber_name: row.subscriber_name || 'Unknown',
         ticket: String(row.ticket_id),
-        csid: String(row.subscriber_id),
-        aspect: 'ticket',
+        subscriber_id: String(row.subscriber_id),
+        ticketing: 'yes',
       },
     }))
 
@@ -86,8 +87,9 @@ export class SDService {
       labels: {
         ip: row.ip_address,
         host: row.subscriber_name || 'Unknown',
-        csid: String(row.subscriber_id),
-        aspect: 'fttx',
+        subscriber_name: row.subscriber_name || 'Unknown',
+        subscriber_id: String(row.subscriber_id),
+        fttx: 'yes',
         operator: 'iforte',
       },
     }))
@@ -131,8 +133,9 @@ export class SDService {
       labels: {
         ip: row.ip_address,
         host: row.subscriber_name || 'Unknown',
-        csid: String(row.subscriber_id),
-        aspect: 'fttx',
+        subscriber_name: row.subscriber_name || 'Unknown',
+        subscriber_id: String(row.subscriber_id),
+        fttx: 'yes',
         operator: 'fbstar',
       },
     }))
@@ -174,8 +177,9 @@ export class SDService {
       labels: {
         ip: row.ip_address,
         host: row.subscriber_name || 'Unknown',
-        csid: String(row.subscriber_id),
-        aspect: 'fttx',
+        subscriber_name: row.subscriber_name || 'Unknown',
+        subscriber_id: String(row.subscriber_id),
+        fttx: 'yes',
         operator: 'cgs',
       },
     }))
@@ -217,8 +221,9 @@ export class SDService {
       labels: {
         ip: row.ip_address,
         host: row.subscriber_name || 'Unknown',
-        csid: String(row.subscriber_id),
-        aspect: 'fttx',
+        subscriber_name: row.subscriber_name || 'Unknown',
+        subscriber_id: String(row.subscriber_id),
+        fttx: 'yes',
         operator: 'sip',
       },
     }))
