@@ -37,7 +37,13 @@ export const dataQualityRegistry = new Registry()
 export const dataQualityMissingCIDGauge = new Gauge({
   name: 'data_quality_missing_circuit_id',
   help: 'Pelanggan aktif yang belum memiliki Vendor Circuit ID',
-  labelNames: ['operator', 'subscriber_id', 'subscriber_name', 'status'],
+  labelNames: [
+    'operator',
+    'fttx',
+    'subscriber_id',
+    'subscriber_name',
+    'status',
+  ],
   registers: [dataQualityRegistry],
 })
 
@@ -248,6 +254,7 @@ export class MetricsService {
         dataQualityMissingCIDGauge.set(
           {
             operator: 'fbstar',
+            fttx: 'yes',
             subscriber_id: subscriberId,
             subscriber_name: subscriberName,
             status,
