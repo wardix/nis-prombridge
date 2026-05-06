@@ -3,6 +3,7 @@ import {
   domainRegistry,
   operatorRegistry,
   dataQualityRegistry,
+  ticketRegistry,
   metricsService,
 } from '../services/metrics.service'
 
@@ -23,6 +24,12 @@ router.get('/operator-tickets', async (c) => {
 router.get('/data-quality', async (c) => {
   await metricsService.updateDataQualityMetrics()
   const metrics = await dataQualityRegistry.metrics()
+  return c.text(metrics)
+})
+
+router.get('/tickets', async (c) => {
+  await metricsService.updateUnassignedTicketMetrics()
+  const metrics = await ticketRegistry.metrics()
   return c.text(metrics)
 })
 

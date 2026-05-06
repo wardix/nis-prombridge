@@ -7,6 +7,8 @@ const configSchema = z.object({
   DB_USER: z.string(),
   DB_PASSWORD: z.string(),
   DB_NAME: z.string(),
+  TICKET_TYPE_1_NAME: z.string().default('incident'),
+  TICKET_TYPE_2_NAME: z.string().default('request'),
 })
 
 export const config = configSchema.parse(process.env)
