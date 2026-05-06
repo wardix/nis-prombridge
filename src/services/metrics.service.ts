@@ -1,5 +1,6 @@
 import { Registry, Gauge } from 'prom-client'
 import { sql } from '../db/client'
+import { config } from '../config'
 
 // Domain Expiry Metrics Registry (Very Low Frequency)
 export const domainRegistry = new Registry()
@@ -45,6 +46,15 @@ export const dataQualityMissingCIDGauge = new Gauge({
     'status',
   ],
   registers: [dataQualityRegistry],
+})
+
+export const ticketRegistry = new Registry()
+
+export const ticketUnassignedGauge = new Gauge({
+  name: 'ticket_unassigned_info',
+  help: 'Tiket yang belum ditugaskan ke petugas',
+  labelNames: ['subscriber_id', 'subscriber_name', 'ticket', 'type', 'issue'],
+  registers: [ticketRegistry],
 })
 
 export class MetricsService {
@@ -264,6 +274,62 @@ export class MetricsService {
       })
     } catch (error) {
       console.error('Error updating data quality metrics:', error)
+    }
+  }
+
+  async updateUnassignedTicketMetrics() {
+    try {
+      const rows = (await sql`
+        SELECT 
+          t.TtsId AS ticket_id, 
+          t.CustServId AS subscriber_id, 
+          cs.CustAccName AS subscriber_name, 
+          t.TtsTypeId AS type_id, 
+          TRIM(SUBSTRING_INDEX(t.Problem, '\\n', 1)) AS issue
+        FROM Tts t
+        LEFT JOIN CustomerServices cs ON cs.CustServId = t.CustServId
+        LEFT JOIN Customer c ON c.CustId = cs.CustId
+        WHERE 
+          c.BranchId = '020' 
+          AND t.status = 'Open' 
+          AND t.TtsTypeId IN (1, 2) 
+          AND t.AssignedNo = 0;
+      `) as {
+        ticket_id: string | null
+        subscriber_id: string | null
+        subscriber_name: string | null
+        type_id: number | null
+        issue: string | null
+      }[]
+
+      ticketUnassignedGauge.reset()
+
+      rows.forEach((row) => {
+        const subscriberId = String(row.subscriber_id ?? '')
+        const subscriberName = row.subscriber_name ?? 'Unknown'
+        const ticket = String(row.ticket_id ?? '')
+        let issue = String(row.issue ?? '')
+        issue = issue.replace(/\r/g, '').trim()
+        issue = issue.replace(/^(Incident|Request)\s*:\s*/i, '').trim()
+
+        let typeName = ''
+        if (row.type_id === 1) typeName = config.TICKET_TYPE_1_NAME
+        else if (row.type_id === 2) typeName = config.TICKET_TYPE_2_NAME
+        else typeName = String(row.type_id ?? '')
+
+        ticketUnassignedGauge.set(
+          {
+            subscriber_id: subscriberId,
+            subscriber_name: subscriberName,
+            ticket,
+            type: typeName,
+            issue,
+          },
+          1
+        )
+      })
+    } catch (error) {
+      console.error('Error updating unassigned ticket metrics:', error)
     }
   }
 }
