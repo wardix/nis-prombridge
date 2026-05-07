@@ -4,54 +4,44 @@
 
 ## 🚀 Fitur Utama
 
-- **Dynamic Service Discovery**: Menyediakan endpoint `/sd/ticket-monitoring` untuk target pemantauan berdasarkan tiket gangguan aktif, serta `/sd/iforte-fttx`, `/sd/fbstar-fttx`, `/sd/cgs-fttx`, dan `/sd/sip-fttx` untuk target pelanggan FTTx via mitra (Iforte/Fbstar/Cgs/Sip) yang tercatat di sistem informasi.
-- **Domain Expiry Monitoring**: Mengekspos metrik tanggal kedaluwarsa domain pelanggan langsung ke Prometheus.
-- **High Performance**: Dibangun di atas runtime **Bun** dan framework **Hono** untuk memastikan latensi minimal dan efisiensi sumber daya.
-- **Native SQL**: Menggunakan `bun:sql` (driver native Zig) untuk koneksi database MySQL yang aman, cepat, dan modern.
-- **Professional Tooling**: Menggunakan **Biome** untuk standarisasi kode dan **Husky** untuk validasi otomatis sebelum commit.
+- **Dynamic Service Discovery**: Menyediakan endpoint untuk target pemantauan otomatis berdasarkan tiket aktif dan data pelanggan FTTx dari berbagai mitra (Iforte, Fbstar, Cgs, Sip).
+- **SLA & Compliance Monitoring**: Mengekspos metrik waktu eskalasi tiket vendor untuk memantau kepatuhan deadline/SLA.
+- **Data Quality Audit**: Memonitor kelengkapan data administratif seperti Vendor Circuit ID yang belum terisi.
+- **Domain Expiry Monitoring**: Melacak tanggal kedaluwarsa domain pelanggan lengkap dengan informasi layanan yang terdampak.
+- **Native Performance**: Dibangun dengan **Bun** dan **Hono** menggunakan native `bun:sql` untuk kecepatan maksimal.
 
 ## 🛠️ Tech Stack
 
-- **Runtime**: [Bun](https://bun.sh/) (All-in-one JavaScript runtime)
-- **Web Framework**: [Hono](https://hono.dev/) (Ultrafast web framework)
+- **Runtime**: [Bun](https://bun.sh/)
+- **Web Framework**: [Hono](https://hono.dev/)
 - **Database**: Native MySQL via `bun:sql`
-- **Metrics**: `prom-client` (Standard Prometheus client for Node.js/Bun)
-- **Validation**: `Zod` (TypeScript-first schema validation)
-- **Formatting**: `Biome` (Fast all-in-one toolchain)
+- **Metrics**: `prom-client`
+- **Formatting**: `Biome`
 
 ## 📋 Endpoint API
 
-### 1. Service Discovery
+### 1. Service Discovery (JSON Format)
+Seluruh endpoint SD menghasilkan format target Prometheus dengan label standar: `ip`, `subscriber_id`, `subscriber_name`, dan penanda kategori (`ticketing="yes"` atau `fttx="yes"`).
+
 | Endpoint | Method | Deskripsi |
 | :--- | :--- | :--- |
-| `/sd/ticket-monitoring` | `GET` | Mengembalikan daftar target IP pelanggan dengan tiket berstatus 'Open'. Mendukung filter cabang melalui query parameter `?branch=020,027`. |
-| `/sd/iforte-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Iforte. Mendukung filter cabang melalui query parameter `?branch=020,028`. |
-| `/sd/fbstar-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Fbstar. Mendukung filter cabang melalui query parameter `?branch=020,028`. |
-| `/sd/cgs-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Cgs. Mendukung filter cabang melalui query parameter `?branch=020,028`. |
-| `/sd/sip-fttx` | `GET` | Mengembalikan daftar target IP pelanggan FTTx aktif melalui jaringan mitra Sip. Mendukung filter cabang melalui query parameter `?branch=020,028`. |
+| `/sd/ticket-monitoring` | `GET` | Target IP pelanggan dengan tiket berstatus 'Open'. |
+| `/sd/iforte-fttx` | `GET` | Target IP pelanggan FTTx via mitra Iforte. |
+| `/sd/fbstar-fttx` | `GET` | Target IP pelanggan FTTx via mitra Fbstar. |
+| `/sd/cgs-fttx` | `GET` | Target IP pelanggan FTTx via mitra Cgs. |
+| `/sd/sip-fttx` | `GET` | Target IP pelanggan FTTx via mitra Sip. |
 
-### 2. Metrics (Format Prometheus)
+*Semua endpoint SD mendukung filter cabang melalui query parameter `?branch=020,027`.*
+
+### 2. Metrics (Prometheus Text Format)
 | Endpoint | Method | Deskripsi |
 | :--- | :--- | :--- |
-| `/metrics/domains` | `GET` | Mengekspos metrik `domain_expiry_timestamp` (Unix timestamp) dengan label pendukung seperti `domain`, `expiry` (YYYY-MM-DD), dan `subscriber_id`. |
-| `/metrics/operator-tickets` | `GET` | Mengekspos metrik `operator_ticket_created_timestamp_seconds` (Gauge) dengan label `operator`, `ticket`, `subscriber_id`, `host`, `request_number`, `ticket_number`, `category`, `status`. Fallbacks: `ticket_number="pending"`, `category="unknown"`, `status="submitted"`. |
-| `/metrics/data-quality` | `GET` | Mengekspos metrik `data_quality_missing_circuit_id` (Gauge) untuk pelanggan aktif yang belum memiliki Vendor Circuit ID. Label: `operator="fbstar"`, `subscriber_id`, `host`, `status`. |
+| `/metrics/domains` | `GET` | Metrik `domain_expiry_timestamp` untuk melacak kedaluwarsa domain. |
+| `/metrics/operator-tickets` | `GET` | Metrik `operator_ticket_created_timestamp_seconds` untuk monitoring SLA vendor. |
+| `/metrics/data-quality` | `GET` | Metrik `data_quality_missing_circuit_id` untuk audit kelengkapan data Vendor CID. |
+| `/metrics/tickets` | `GET` | Metrik `ticket_unassigned_info` untuk tiket yang belum ditugaskan ke petugas. |
 
-#### Data Quality Metrics
-Endpoint `/metrics/data-quality` mengekspos metrik bertipe Gauge bernama `data_quality_missing_circuit_id`. Metrik ini menunjukkan pelanggan aktif yang terhubung melalui vendor Fbstar (vendor id = 1) tetapi memiliki nilai Vendor CID kosong.
-
-Labels:
-- operator: tetap `fbstar`
-- subscriber_id: subscriber id (CustServId)
-- host: nama pelanggan (CustAccName), fallback `Unknown`
-- status: subscription status (CustStatus), fallback `Unknown`
-
-Contoh output Prometheus:
-```
-# HELP data_quality_missing_circuit_id Pelanggan aktif yang belum memiliki Vendor Circuit ID
-# TYPE data_quality_missing_circuit_id gauge
-data_quality_missing_circuit_id{operator="fbstar",subscriber_id="105523",host="PT. Maju Bersama",status="AC"} 1
-```
+---
 
 ## ⚙️ Instalasi & Setup
 
@@ -61,10 +51,9 @@ data_quality_missing_circuit_id{operator="fbstar",subscriber_id="105523",host="P
    ```
 
 2. **Konfigurasi Lingkungan**:
-   Salin berkas `.env.example` menjadi `.env` dan sesuaikan kredensial database Anda:
-   ```bash
-   cp .env.example .env
-   ```
+   Salin berkas `.env.example` menjadi `.env` dan sesuaikan kredensial database Anda. Tambahkan juga konfigurasi mapping tipe tiket jika diperlukan:
+   - `TICKET_TYPE_1_NAME=incident`
+   - `TICKET_TYPE_2_NAME=request`
 
 3. **Menjalankan Aplikasi**:
    ```bash
@@ -78,11 +67,6 @@ data_quality_missing_circuit_id{operator="fbstar",subscriber_id="105523",host="P
 ## 🧹 Standar Pengembangan
 
 Proyek ini mewajibkan penggunaan **Biome** untuk menjaga kerapian kode. Proses pemformatan otomatis akan dijalankan setiap kali Anda melakukan commit menggunakan Git Hooks (Husky).
-
-Untuk menjalankan pemformatan secara manual:
-```bash
-bun format
-```
 
 ---
 *Dikembangkan dengan presisi oleh tim NIS-PromBridge.*
