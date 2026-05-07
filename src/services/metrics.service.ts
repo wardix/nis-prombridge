@@ -53,7 +53,14 @@ export const ticketRegistry = new Registry()
 export const ticketUnassignedGauge = new Gauge({
   name: 'ticket_unassigned_info',
   help: 'Tiket yang belum ditugaskan ke petugas',
-  labelNames: ['subscriber_id', 'subscriber_name', 'ticket', 'type', 'issue'],
+  labelNames: [
+    'subscriber_id',
+    'subscriber_name',
+    'ticket',
+    'type',
+    'issue',
+    'ticketing',
+  ],
   registers: [ticketRegistry],
 })
 
@@ -324,6 +331,7 @@ export class MetricsService {
             ticket,
             type: typeName,
             issue,
+            ticketing: 'yes',
           },
           1
         )
