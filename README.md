@@ -39,7 +39,7 @@ Seluruh endpoint SD menghasilkan format target Prometheus dengan label standar: 
 | `/metrics/domains` | `GET` | Metrik `domain_expiry_timestamp` untuk melacak kedaluwarsa domain. |
 | `/metrics/operator-tickets` | `GET` | Metrik `operator_ticket_created_timestamp_seconds` untuk monitoring SLA vendor. |
 | `/metrics/data-quality` | `GET` | Metrik `data_quality_missing_circuit_id` untuk audit kelengkapan data Vendor CID. |
-| `/metrics/tickets` | `GET` | Metrik `ticket_unassigned_info` untuk tiket yang belum ditugaskan ke petugas. |
+| `/metrics/tickets` | `GET` | Metrik `ticket_unassigned_info` untuk tiket yang belum ditugaskan ke petugas (mendukung label `region`). |
 
 ---
 
@@ -51,9 +51,10 @@ Seluruh endpoint SD menghasilkan format target Prometheus dengan label standar: 
    ```
 
 2. **Konfigurasi Lingkungan**:
-   Salin berkas `.env.example` menjadi `.env` dan sesuaikan kredensial database Anda. Tambahkan juga konfigurasi mapping tipe tiket jika diperlukan:
+   Salin berkas `.env.example` menjadi `.env` dan sesuaikan kredensial database Anda. Tambahkan juga konfigurasi mapping jika diperlukan:
    - `TICKET_TYPE_1_NAME=incident`
    - `TICKET_TYPE_2_NAME=request`
+   - `REGION_MAPPING='{"020":"Jakarta"}'` (Mapping region_id dari database ke nama lokasi)
 
 3. **Menjalankan Aplikasi**:
    ```bash

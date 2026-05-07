@@ -9,6 +9,16 @@ const configSchema = z.object({
   DB_NAME: z.string(),
   TICKET_TYPE_1_NAME: z.string().default('incident'),
   TICKET_TYPE_2_NAME: z.string().default('request'),
+  REGION_MAPPING: z
+    .string()
+    .default('{}')
+    .transform((str) => {
+      try {
+        return JSON.parse(str) as Record<string, string>
+      } catch {
+        return {} as Record<string, string>
+      }
+    }),
 })
 
 export const config = configSchema.parse(process.env)

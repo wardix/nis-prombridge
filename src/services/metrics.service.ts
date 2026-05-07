@@ -60,6 +60,7 @@ export const ticketUnassignedGauge = new Gauge({
     'type',
     'issue',
     'ticketing',
+    'region',
   ],
   registers: [ticketRegistry],
 })
@@ -292,7 +293,8 @@ export class MetricsService {
           t.CustServId AS subscriber_id, 
           cs.CustAccName AS subscriber_name, 
           t.TtsTypeId AS type_id, 
-          TRIM(SUBSTRING_INDEX(t.Problem, '\\n', 1)) AS issue
+          TRIM(SUBSTRING_INDEX(t.Problem, '\\n', 1)) AS issue,
+          COALESCE(c.DisplayBranchId, c.BranchId) AS region_id
         FROM Tts t
         LEFT JOIN CustomerServices cs ON cs.CustServId = t.CustServId
         LEFT JOIN Customer c ON c.CustId = cs.CustId
@@ -307,6 +309,7 @@ export class MetricsService {
         subscriber_name: string | null
         type_id: number | null
         issue: string | null
+        region_id: string | null
       }[]
 
       ticketUnassignedGauge.reset()
@@ -315,6 +318,7 @@ export class MetricsService {
         const subscriberId = String(row.subscriber_id ?? '')
         const subscriberName = row.subscriber_name ?? 'Unknown'
         const ticket = String(row.ticket_id ?? '')
+        const regionId = String(row.region_id ?? '')
         let issue = String(row.issue ?? '')
         issue = issue.replace(/\r/g, '').trim()
         issue = issue.replace(/^(Incident|Request)\s*:\s*/i, '').trim()
@@ -324,6 +328,9 @@ export class MetricsService {
         else if (row.type_id === 2) typeName = config.TICKET_TYPE_2_NAME
         else typeName = String(row.type_id ?? '')
 
+        // Map region_id using REGION_MAPPING or fallback to regionId itself
+        const regionName = config.REGION_MAPPING[regionId] ?? regionId
+
         ticketUnassignedGauge.set(
           {
             subscriber_id: subscriberId,
@@ -332,6 +339,7 @@ export class MetricsService {
             type: typeName,
             issue,
             ticketing: 'yes',
+            region: regionName,
           },
           1
         )
