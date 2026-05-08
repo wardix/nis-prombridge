@@ -110,13 +110,18 @@ export class SDService {
       SELECT DISTINCT
           cs.CustServId AS subscriber_id, 
           cs.CustAccName AS subscriber_name, 
-          SUBSTRING_INDEX(TRIM(cst.Network), '/', 1) AS ip_address 
+          SUBSTRING_INDEX(TRIM(cst.Network), '/', 1) AS ip_address, 
+          cstc.value AS circuit_id
       FROM CustomerServiceTechnical cst 
       LEFT JOIN CustomerServices cs ON cs.CustServId = cst.CustServId 
       LEFT JOIN CustomerServiceTechnicalLink cstl ON cstl.custServId = cst.CustServId 
       LEFT JOIN noc_fiber nf ON nf.id = cstl.foVendorId 
       LEFT JOIN fiber_vendor fv ON fv.id = nf.vendorId 
       LEFT JOIN Customer c ON c.CustId = cs.CustId 
+      LEFT JOIN CustomerServiceTechnicalCustom cstc
+          ON cstc.technicalTypeId = cstl.id
+          AND cstc.technicalType = 'link'
+          AND cstc.attribute = 'Vendor CID'
       WHERE 
           fv.id = 1 
           AND cs.CustStatus IN ('AC', 'FR') 
@@ -126,6 +131,7 @@ export class SDService {
       subscriber_id: string
       subscriber_name: string
       ip_address: string
+      circuit_id: string
     }[]
 
     const targets: PrometheusTarget[] = results.map((row) => ({
@@ -135,6 +141,7 @@ export class SDService {
         host: row.subscriber_name || 'Unknown',
         subscriber_name: row.subscriber_name || 'Unknown',
         subscriber_id: String(row.subscriber_id),
+        circuit_id: row.circuit_id || '',
         fttx: 'yes',
         operator: 'fbstar',
       },
