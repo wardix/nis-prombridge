@@ -228,6 +228,7 @@ export class MetricsService {
             circuit_id: circuitId,
             created_at: createdAt,
             ticketing: 'yes',
+            fttx: 'yes',
           },
           Number(row.insert_timestamp)
         )
