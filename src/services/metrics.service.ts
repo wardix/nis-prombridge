@@ -27,6 +27,8 @@ export const operatorTicketGauge = new Gauge({
     'ticket_number',
     'category',
     'status',
+    'circuit_id',
+    'fttx',
     'created_at',
     'ticketing',
   ],
@@ -172,6 +174,7 @@ export class MetricsService {
         WHERE 
           fvt.fiber_vendor_id = 1
           AND t.Status NOT IN ('Call', 'Pending', 'Cancel', 'Closed')
+          AND NOT (cstc.value IS NULL)
       `) as {
         insert_time: Date | string | null
         insert_timestamp: number | null
