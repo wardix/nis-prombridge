@@ -160,10 +160,15 @@ export class MetricsService {
           fvt.vendor_escalation_ticket_number AS ticket_number,
           fvt.vendor_ticket_category AS category,
           fvt.vendor_ticket_status AS status,
-          fvt.ticket_id
+          fvt.ticket_id,
+          cstc.value AS circuit_id
         FROM FiberVendorTickets fvt
         LEFT JOIN Tts t ON t.TtsId = fvt.ticket_id
         LEFT JOIN CustomerServices cs ON cs.CustServId = t.CustServId
+        LEFT JOIN CustomerServiceTechnicalLink cstl ON cstl.custServId = cs.CustServId
+        LEFT JOIN CustomerServiceTechnicalCustom cstc ON cstc.technicalTypeId = cstl.id
+          AND cstc.technicalType = 'link'
+          AND cstc.attribute = 'Vendor CID'
         WHERE 
           fvt.fiber_vendor_id = 1
           AND t.Status NOT IN ('Call', 'Pending', 'Cancel', 'Closed')
@@ -177,6 +182,7 @@ export class MetricsService {
         category: string | null
         status: string | null
         ticket_id: string | null
+        circuit_id: string | null
       }[]
 
       operatorTicketGauge.reset()
@@ -193,6 +199,7 @@ export class MetricsService {
         const category = row.category ?? 'unknown'
         const status = row.status ?? 'submitted'
         const host = row.subscriber_name ?? 'Unknown'
+        const circuitId = row.circuit_id ?? 'N/A'
 
         // Format the insert_time to 'YYYY-MM-DD HH:mm'
         let createdAt = 'Unknown'
@@ -218,6 +225,7 @@ export class MetricsService {
             ticket_number: ticketNumber,
             category,
             status,
+            circuit_id: circuitId,
             created_at: createdAt,
             ticketing: 'yes',
           },
