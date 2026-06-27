@@ -19,6 +19,8 @@ const configSchema = z.object({
         return {} as Record<string, string>
       }
     }),
+  GATEWAY_URL: z.string().default('http://localhost:3000'),
+  GATEWAY_TOKEN: z.string().default(''),
 })
 
 export const config = configSchema.parse(process.env)
