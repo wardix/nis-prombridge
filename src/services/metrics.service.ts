@@ -1,6 +1,29 @@
 import { Registry, Gauge } from 'prom-client'
 import { sql } from '../db/client'
 import { config } from '../config'
+import { gatewayClient } from '../gateway/client'
+
+interface UnassignedTicket {
+  ticket_id: string | null
+  subscriber_id: string | null
+  subscriber_name: string | null
+  type_id: number | null
+  issue: string | null
+  region_id: string | null
+}
+
+interface VendorTicket {
+  insert_time: Date | string | null
+  insert_timestamp: number | null
+  subscriber_id: string | null
+  subscriber_name: string | null
+  request_number: string | null
+  ticket_number: string | null
+  category: string | null
+  status: string | null
+  ticket_id: string | null
+  circuit_id: string | null
+}
 
 // Domain Expiry Metrics Registry (Very Low Frequency)
 export const domainRegistry = new Registry()
@@ -152,41 +175,10 @@ export class MetricsService {
   // New: Update operator/vendor ticket metrics for SLA monitoring
   async updateOperatorTicketMetrics() {
     try {
-      const rows = (await sql`
-        SELECT 
-          fvt.insert_time,
-          UNIX_TIMESTAMP(fvt.insert_time) AS insert_timestamp,
-          cs.CustServId AS subscriber_id,
-          cs.CustAccName AS subscriber_name,
-          fvt.vendor_ticket_number AS request_number,
-          fvt.vendor_escalation_ticket_number AS ticket_number,
-          fvt.vendor_ticket_category AS category,
-          fvt.vendor_ticket_status AS status,
-          fvt.ticket_id,
-          cstc.value AS circuit_id
-        FROM FiberVendorTickets fvt
-        LEFT JOIN Tts t ON t.TtsId = fvt.ticket_id
-        LEFT JOIN CustomerServices cs ON cs.CustServId = t.CustServId
-        LEFT JOIN CustomerServiceTechnicalLink cstl ON cstl.custServId = cs.CustServId
-        LEFT JOIN CustomerServiceTechnicalCustom cstc ON cstc.technicalTypeId = cstl.id
-          AND cstc.technicalType = 'link'
-          AND cstc.attribute = 'Vendor CID'
-        WHERE 
-          fvt.fiber_vendor_id = 1
-          AND t.Status NOT IN ('Call', 'Pending', 'Cancel', 'Closed')
-          AND NOT (cstc.value IS NULL)
-      `) as {
-        insert_time: Date | string | null
-        insert_timestamp: number | null
-        subscriber_id: string | null
-        subscriber_name: string | null
-        request_number: string | null
-        ticket_number: string | null
-        category: string | null
-        status: string | null
-        ticket_id: string | null
-        circuit_id: string | null
-      }[]
+      const { results: rows } = await gatewayClient.get<{ results: VendorTicket[] }>(
+        '/ticket/vendor',
+        { vendor_id: '1' }
+      )
 
       operatorTicketGauge.reset()
 
@@ -299,30 +291,10 @@ export class MetricsService {
 
   async updateUnassignedTicketMetrics() {
     try {
-      const rows = (await sql`
-        SELECT 
-          t.TtsId AS ticket_id, 
-          t.CustServId AS subscriber_id, 
-          cs.CustAccName AS subscriber_name, 
-          t.TtsTypeId AS type_id, 
-          TRIM(SUBSTRING_INDEX(t.Problem, '\\n', 1)) AS issue,
-          COALESCE(c.DisplayBranchId, c.BranchId) AS region_id
-        FROM Tts t
-        LEFT JOIN CustomerServices cs ON cs.CustServId = t.CustServId
-        LEFT JOIN Customer c ON c.CustId = cs.CustId
-        WHERE 
-          c.BranchId = '020' 
-          AND t.status = 'Open' 
-          AND t.TtsTypeId IN (1, 2) 
-          AND t.AssignedNo = 0;
-      `) as {
-        ticket_id: string | null
-        subscriber_id: string | null
-        subscriber_name: string | null
-        type_id: number | null
-        issue: string | null
-        region_id: string | null
-      }[]
+      const { results: rows } = await gatewayClient.get<{ results: UnassignedTicket[] }>(
+        '/ticket/unassigned',
+        { branch: '020' }
+      )
 
       ticketUnassignedGauge.reset()
 
