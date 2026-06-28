@@ -1,9 +1,17 @@
 import { sql } from '../db/client'
 import { config } from '../config'
+import { gatewayClient } from '../gateway/client'
 
 export interface PrometheusTarget {
   targets: string[]
   labels: Record<string, string>
+}
+
+interface FttxTarget {
+  subscriber_id: string
+  subscriber_name: string
+  ip_address: string
+  circuit_id: string | null
 }
 
 export class SDService {
@@ -60,27 +68,10 @@ export class SDService {
         ? branchIds
         : ['020', '027', '028', '029']
 
-    const results = (await sql`
-      SELECT DISTINCT
-          cs.CustServId AS subscriber_id, 
-          cs.CustAccName AS subscriber_name, 
-          SUBSTRING_INDEX(TRIM(cst.Network), '/', 1) AS ip_address 
-      FROM CustomerServiceTechnical cst 
-      LEFT JOIN CustomerServices cs ON cs.CustServId = cst.CustServId 
-      LEFT JOIN CustomerServiceTechnicalLink cstl ON cstl.custServId = cst.CustServId 
-      LEFT JOIN noc_fiber nf ON nf.id = cstl.foVendorId 
-      LEFT JOIN fiber_vendor fv ON fv.id = nf.vendorId 
-      LEFT JOIN Customer c ON c.CustId = cs.CustId 
-      WHERE 
-          fv.id = 22
-          AND cs.CustStatus IN ('AC', 'FR') 
-          AND cst.Network LIKE ${'%/32'} 
-          AND FIND_IN_SET(COALESCE(c.DisplayBranchId, c.BranchId), ${branches.join(',')})
-    `) as {
-      subscriber_id: string
-      subscriber_name: string
-      ip_address: string
-    }[]
+    const { results } = await gatewayClient.get<{ results: FttxTarget[] }>(
+      '/subscriber/fttx-targets',
+      { operator_id: '22', branch: branches.join(',') }
+    )
 
     const targets: PrometheusTarget[] = results.map((row) => ({
       targets: [row.ip_address],
@@ -106,33 +97,10 @@ export class SDService {
         ? branchIds
         : ['020', '027', '028', '029']
 
-    const results = (await sql`
-      SELECT DISTINCT
-          cs.CustServId AS subscriber_id, 
-          cs.CustAccName AS subscriber_name, 
-          SUBSTRING_INDEX(TRIM(cst.Network), '/', 1) AS ip_address, 
-          cstc.value AS circuit_id
-      FROM CustomerServiceTechnical cst 
-      LEFT JOIN CustomerServices cs ON cs.CustServId = cst.CustServId 
-      LEFT JOIN CustomerServiceTechnicalLink cstl ON cstl.custServId = cst.CustServId 
-      LEFT JOIN noc_fiber nf ON nf.id = cstl.foVendorId 
-      LEFT JOIN fiber_vendor fv ON fv.id = nf.vendorId 
-      LEFT JOIN Customer c ON c.CustId = cs.CustId 
-      LEFT JOIN CustomerServiceTechnicalCustom cstc
-          ON cstc.technicalTypeId = cstl.id
-          AND cstc.technicalType = 'link'
-          AND cstc.attribute = 'Vendor CID'
-      WHERE 
-          fv.id = 1 
-          AND cs.CustStatus IN ('AC', 'FR') 
-          AND cst.Network LIKE ${'%/32'} 
-          AND FIND_IN_SET(COALESCE(c.DisplayBranchId, c.BranchId), ${branches.join(',')})
-    `) as {
-      subscriber_id: string
-      subscriber_name: string
-      ip_address: string
-      circuit_id: string
-    }[]
+    const { results } = await gatewayClient.get<{ results: FttxTarget[] }>(
+      '/subscriber/fttx-targets',
+      { operator_id: '1', branch: branches.join(',') }
+    )
 
     const targets: PrometheusTarget[] = results.map((row) => ({
       targets: [row.ip_address],
@@ -157,27 +125,10 @@ export class SDService {
         ? branchIds
         : ['020', '027', '028', '029']
 
-    const results = (await sql`
-      SELECT DISTINCT
-          cs.CustServId AS subscriber_id, 
-          cs.CustAccName AS subscriber_name, 
-          SUBSTRING_INDEX(TRIM(cst.Network), '/', 1) AS ip_address 
-      FROM CustomerServiceTechnical cst 
-      LEFT JOIN CustomerServices cs ON cs.CustServId = cst.CustServId 
-      LEFT JOIN CustomerServiceTechnicalLink cstl ON cstl.custServId = cst.CustServId 
-      LEFT JOIN noc_fiber nf ON nf.id = cstl.foVendorId 
-      LEFT JOIN fiber_vendor fv ON fv.id = nf.vendorId 
-      LEFT JOIN Customer c ON c.CustId = cs.CustId 
-      WHERE 
-          fv.id = 2 
-          AND cs.CustStatus IN ('AC', 'FR') 
-          AND cst.Network LIKE ${'%/32'} 
-          AND FIND_IN_SET(COALESCE(c.DisplayBranchId, c.BranchId), ${branches.join(',')})
-    `) as {
-      subscriber_id: string
-      subscriber_name: string
-      ip_address: string
-    }[]
+    const { results } = await gatewayClient.get<{ results: FttxTarget[] }>(
+      '/subscriber/fttx-targets',
+      { operator_id: '2', branch: branches.join(',') }
+    )
 
     const targets: PrometheusTarget[] = results.map((row) => ({
       targets: [row.ip_address],
@@ -201,27 +152,10 @@ export class SDService {
         ? branchIds
         : ['020', '027', '028', '029']
 
-    const results = (await sql`
-      SELECT DISTINCT
-          cs.CustServId AS subscriber_id, 
-          cs.CustAccName AS subscriber_name, 
-          SUBSTRING_INDEX(TRIM(cst.Network), '/', 1) AS ip_address 
-      FROM CustomerServiceTechnical cst 
-      LEFT JOIN CustomerServices cs ON cs.CustServId = cst.CustServId 
-      LEFT JOIN CustomerServiceTechnicalLink cstl ON cstl.custServId = cst.CustServId 
-      LEFT JOIN noc_fiber nf ON nf.id = cstl.foVendorId 
-      LEFT JOIN fiber_vendor fv ON fv.id = nf.vendorId 
-      LEFT JOIN Customer c ON c.CustId = cs.CustId 
-      WHERE 
-          fv.id = 13
-          AND cs.CustStatus IN ('AC', 'FR') 
-          AND cst.Network LIKE ${'%/32'} 
-          AND FIND_IN_SET(COALESCE(c.DisplayBranchId, c.BranchId), ${branches.join(',')})
-    `) as {
-      subscriber_id: string
-      subscriber_name: string
-      ip_address: string
-    }[]
+    const { results } = await gatewayClient.get<{ results: FttxTarget[] }>(
+      '/subscriber/fttx-targets',
+      { operator_id: '13', branch: branches.join(',') }
+    )
 
     const targets: PrometheusTarget[] = results.map((row) => ({
       targets: [row.ip_address],
