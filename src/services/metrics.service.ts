@@ -73,6 +73,20 @@ export const dataQualityMissingCIDGauge = new Gauge({
   registers: [dataQualityRegistry],
 })
 
+export const dataQualityInvalidCIDGauge = new Gauge({
+  name: 'data_quality_invalid_circuit_id',
+  help: 'Pelanggan aktif dengan Vendor Circuit ID tidak valid',
+  labelNames: [
+    'operator',
+    'fttx',
+    'subscriber_id',
+    'subscriber_name',
+    'status',
+    'circuit_id',
+  ],
+  registers: [dataQualityRegistry],
+})
+
 export const ticketRegistry = new Registry()
 
 export const ticketUnassignedGauge = new Gauge({
@@ -175,10 +189,9 @@ export class MetricsService {
   // New: Update operator/vendor ticket metrics for SLA monitoring
   async updateOperatorTicketMetrics() {
     try {
-      const { results: rows } = await gatewayClient.get<{ results: VendorTicket[] }>(
-        '/ticket/vendor',
-        { vendor_id: '1' }
-      )
+      const { results: rows } = await gatewayClient.get<{
+        results: VendorTicket[]
+      }>('/ticket/vendor', { vendor_id: '1' })
 
       operatorTicketGauge.reset()
 
@@ -235,7 +248,7 @@ export class MetricsService {
 
   async updateDataQualityMetrics() {
     try {
-      const rows = (await sql`
+      const missingCIDRows = (await sql`
         SELECT 
             cstl.CustServId AS subscriber_id, 
             cs.CustAccName AS subscriber_name, 
@@ -266,9 +279,42 @@ export class MetricsService {
         subscription_status: string | null
       }[]
 
-      dataQualityMissingCIDGauge.reset()
+      const invalidCIDRows = (await sql`
+        SELECT
+            cstl.CustServId AS subscriber_id,
+            cs.CustAccName AS subscriber_name,
+            TRIM(cstc.value) AS circuit_id,
+            cs.CustStatus AS subscription_status
+        FROM CustomerServiceTechnicalCustom cstc
+        LEFT JOIN CustomerServiceTechnicalLink cstl
+            ON cstl.id = cstc.technicalTypeId
+        LEFT JOIN CustomerServices cs
+            ON cs.CustServId = cstl.CustServId
+        LEFT JOIN Customer c
+            ON c.CustId = cs.CustId
+        LEFT JOIN noc_fiber nf
+            ON nf.id = cstl.foVendorId
+        LEFT JOIN fiber_vendor fv
+            ON nf.vendorId = fv.id
+        WHERE
+            cstc.technicalType = 'link'
+            AND cstc.attribute = 'Vendor CID'
+            AND cstl.CustServId IS NOT NULL
+            AND cs.CustStatus NOT IN ('NA', 'BL')
+            AND fv.id = 1
+            AND NOT (TRIM(cstc.value) = '' OR cstc.value IS NULL)
+            AND NOT (TRIM(cstc.value) LIKE 'CRT%');
+      `) as {
+        subscriber_id: string | null
+        subscriber_name: string | null
+        circuit_id: string | null
+        subscription_status: string | null
+      }[]
 
-      rows.forEach((row) => {
+      dataQualityMissingCIDGauge.reset()
+      dataQualityInvalidCIDGauge.reset()
+
+      missingCIDRows.forEach((row) => {
         const subscriberId = String(row.subscriber_id ?? '')
         const subscriberName = row.subscriber_name ?? 'Unknown'
         const status = row.subscription_status ?? 'Unknown'
@@ -284,6 +330,25 @@ export class MetricsService {
           1
         )
       })
+
+      invalidCIDRows.forEach((row) => {
+        const subscriberId = String(row.subscriber_id ?? '')
+        const subscriberName = row.subscriber_name ?? 'Unknown'
+        const status = row.subscription_status ?? 'Unknown'
+        const circuitId = row.circuit_id ?? 'Unknown'
+
+        dataQualityInvalidCIDGauge.set(
+          {
+            operator: 'fbstar',
+            fttx: 'yes',
+            subscriber_id: subscriberId,
+            subscriber_name: subscriberName,
+            status,
+            circuit_id: circuitId,
+          },
+          1
+        )
+      })
     } catch (error) {
       console.error('Error updating data quality metrics:', error)
     }
@@ -291,10 +356,9 @@ export class MetricsService {
 
   async updateUnassignedTicketMetrics() {
     try {
-      const { results: rows } = await gatewayClient.get<{ results: UnassignedTicket[] }>(
-        '/ticket/unassigned',
-        { branch: '020' }
-      )
+      const { results: rows } = await gatewayClient.get<{
+        results: UnassignedTicket[]
+      }>('/ticket/unassigned', { branch: '020' })
 
       ticketUnassignedGauge.reset()
 

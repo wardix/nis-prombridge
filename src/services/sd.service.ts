@@ -28,10 +28,9 @@ export class SDService {
     const branches =
       branchIds && branchIds.length > 0 ? branchIds : ['020', '027']
 
-    const { results } = await gatewayClient.get<{ results: TicketMonitoringTarget[] }>(
-      '/ticket/monitoring',
-      { branch: branches.join(','), type_id: '6' }
-    )
+    const { results } = await gatewayClient.get<{
+      results: TicketMonitoringTarget[]
+    }>('/ticket/monitoring', { branch: branches.join(','), type_id: '6' })
 
     const targets: PrometheusTarget[] = results.map((row) => ({
       targets: [row.ip_address],
