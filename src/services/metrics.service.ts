@@ -25,6 +25,12 @@ interface VendorTicket {
   circuit_id: string | null
 }
 
+interface UnallocatedNetworkSubscriber {
+  subscriber_id: string | null
+  subscriber_name: string | null
+  service_id: string | null
+}
+
 // Domain Expiry Metrics Registry (Very Low Frequency)
 export const domainRegistry = new Registry()
 
@@ -84,6 +90,13 @@ export const dataQualityInvalidCIDGauge = new Gauge({
     'status',
     'circuit_id',
   ],
+  registers: [dataQualityRegistry],
+})
+
+export const dataQualityUnallocatedNetworkGauge = new Gauge({
+  name: 'data_quality_unallocated_network',
+  help: 'Pelanggan aktif yang belum memiliki alokasi network/IP',
+  labelNames: ['subscriber_id', 'subscriber_name', 'service_id'],
   registers: [dataQualityRegistry],
 })
 
@@ -349,6 +362,31 @@ export class MetricsService {
           1
         )
       })
+
+      try {
+        const { results: unallocatedRows } = await gatewayClient.get<{
+          results: UnallocatedNetworkSubscriber[]
+        }>('/subscriber/networks/unallocated')
+
+        dataQualityUnallocatedNetworkGauge.reset()
+
+        unallocatedRows.forEach((row) => {
+          const subscriberId = String(row.subscriber_id ?? '')
+          const subscriberName = row.subscriber_name ?? 'Unknown'
+          const serviceId = row.service_id ?? 'Unknown'
+
+          dataQualityUnallocatedNetworkGauge.set(
+            {
+              subscriber_id: subscriberId,
+              subscriber_name: subscriberName,
+              service_id: serviceId,
+            },
+            1
+          )
+        })
+      } catch (error) {
+        console.error('Error updating unallocated network metrics:', error)
+      }
     } catch (error) {
       console.error('Error updating data quality metrics:', error)
     }
