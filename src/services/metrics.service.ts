@@ -316,7 +316,8 @@ export class MetricsService {
             AND cs.CustStatus NOT IN ('NA', 'BL')
             AND fv.id = 1
             AND NOT (TRIM(cstc.value) = '' OR cstc.value IS NULL)
-            AND NOT (TRIM(cstc.value) LIKE 'CRT%');
+            AND NOT (TRIM(cstc.value) LIKE 'CRT%')
+            AND NOT (TRIM(cstc.value) REGEXP '^[0-9]+$');
       `) as {
         subscriber_id: string | null
         subscriber_name: string | null
